@@ -35,7 +35,7 @@ class Puzzle:
         self.corners, self.borders, self.inner_body = list(), list(), list()
         self.separate_pieces()
 
-        self.puzzle = [[0 for _ in range(size[1])] for _ in range(self.size[0])]
+        self.puzzle = self.reset_puzzle()
 
     @staticmethod
     def parse_lines(lines):
@@ -52,6 +52,9 @@ class Puzzle:
             elif piece.count('0') == 0: self.inner_body.append(key)
             else: raise Exception(f'The piece {self.all_pieces[key]} is not valid.')
         print(self.corners, self.borders, self.inner_body)
+
+    def reset_puzzle(self):
+        return [[0 for _ in range(self.size[1])] for _ in range(self.size[0])]
 
     def build_corners(self):
         piece0, piece1, piece2, piece3 = self.all_pieces[self.corners[0]], self.all_pieces[self.corners[1]],\
@@ -70,34 +73,43 @@ class Puzzle:
             pc = self.all_pieces[pc_ind]
             for row_ind, row in enumerate(self.puzzle):
                 for col_ind, col in enumerate(row):
-                    if col == '0':
+                    if col == 0:
                         left_index = self.puzzle[row_ind][col_ind-1] if 0 < col_ind else None
                         right_index = self.puzzle[row_ind][col_ind+1] if col_ind < len(row) else None
-                        left_piece = self.all_pieces[left_index]
-                        right_piece = self.all_pieces[right_index]
+                        left_piece = self.all_pieces[left_index] if left_index else None
+                        right_piece = self.all_pieces[right_index] if right_index else None
                         for _ in range(4):
                             if row_ind == 0:
+
                                 if pc.sides['top'] == '0' and pc.check_fit(left_piece, ['left', 'right']):
                                     self.puzzle[row_ind][col_ind] = pc_ind
                                     return
-                                else: pc.turn_piece()
-                            elif row_ind == len(self.puzzle):
-                                if pc.sides['bottom'] == '0':
-                                    self.puzzle[row_ind][col_ind] = pc_ind
-                                    return
-                                else: pc.turn_piece()
-                            else:
-                                if col_ind == 0:
-                                    if pc.sides['bottom'] == '0':
-                                        self.puzzle[row_ind][col_ind] = pc_ind
-                                        return
-                                    else: pc.turn_piece()
-                        shuffle(self.borders)
+                                else:
+                                    print('turning piece!')
+                                    pc.turn_piece()
+                            # elif row_ind == len(self.puzzle):
+                            #     if pc.sides['bottom'] == '0':
+                            #         self.puzzle[row_ind][col_ind] = pc_ind
+                            #         return
+                            #     else: pc.turn_piece()
+                            # else:
+                            #     if col_ind == 0:
+                            #         if pc.sides['bottom'] == '0':
+                            #             self.puzzle[row_ind][col_ind] = pc_ind
+                            #             return
+                            #         else: pc.turn_piece()
                         return 'reset'
 
+        response = ''
         for piece_index in self.borders:
             response = find_socket(piece_index)
-            if response == 'reset': return self.build_borders()
+            if response == 'reset':
+                print('Resetting borders')
+                shuffle(self.borders)
+                self.puzzle = self.reset_puzzle()
+                self.build_corners()
+                break
+        if response == 'reset': self.build_borders()
 
     def build_inner_body(self):
         pass
