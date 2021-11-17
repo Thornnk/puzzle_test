@@ -4,7 +4,7 @@ from random import shuffle
 class Puzzle:
     def __init__(self, size, lines):
         self.size = size
-        self.all_pieces = [Piece(i, lines[i]) for i in range(1, len(lines))]
+        self.all_pieces = [Piece(i, lines[i].split()) for i in range(1, len(lines))]
 
         self.puzzle = None
         self.reset_puzzle()
@@ -19,13 +19,72 @@ class Puzzle:
         self.pieces = self.all_pieces.copy()
         shuffle(self.pieces)
 
+    @staticmethod
+    def check_border_piece(row_ind, col_ind, piece):
+        for _ in range(4):
+            if row_ind == 0:
+                if col_ind == 0:
+                    if piece.sides['left'] == '0' and piece.sides['top'] == '0': return True
+                    else: piece.turn_piece()
+                else:
+                    if piece.sides['top'] == '0' and piece.sides['right'] == '0': return True
+                    else: piece.turn_piece()
+            else:
+                if col_ind == 0:
+                    if piece.sides['bottom'] == '0' and piece.sides['left'] == '0': return True
+                    else: piece.turn_piece()
+                else:
+                    if piece.sides['right'] == '0' and piece.sides['bottom'] == '0': return True
+                    else: piece.turn_piece()
+        return False
+
+    def check_inner_piece(self, row_ind, col_ind, piece):
+        for _ in range(4):
+            if row_ind == 0:
+                if col_ind == 0: return True
+                else:
+                    if self.puzzle[row_ind][col_ind-1].sides['right'] == piece.sides['left']: return True
+                    else: piece.turn_piece()
+            else:
+                if col_ind == 0:
+                    if self.puzzle[row_ind-1][col_ind].sides['bottom'] == piece.sides['top']: return True
+                    else: piece.turn_piece()
+                else:
+                    print(self.puzzle)
+                    if self.puzzle[row_ind-1][col_ind].sides['bottom'] == piece.sides['top']:
+                        if self.puzzle[row_ind][col_ind-1].sides['right'] == piece.sides['left']: return True
+                    else: piece.turn_piece()
+        return False
+
+    def check_fit(self, row_ind, col_ind, piece):
+        fit = list()
+        # Da el visto bueno en caso de no ser un borde, o si lo es, de estar orientando bien sus lados '0'
+        if row_ind == 0 or row_ind == self.size[0] or col_ind == 0 or col_ind == self.size[1]:
+            if self.check_border_piece(row_ind, col_ind, piece): fit.append(1)
+            else: fit.append(0)
+
+        # Da el visto bueno si la pieza encaja con las de su alrededor (izquierda y arriba)
+        if self.check_inner_piece(row_ind, col_ind, piece): fit.append(1)
+        else: fit.append(0)
+
+        # Da el visto bueno conjunto si los dos anteriores vistos buenos han sido positivos
+        print(fit)
+        return all(fit)
+
     def build_puzzle(self):
-        for p in self.pieces:
-            for row_index, row in self.puzzle:
-                for col_index, col in row:
-                    if row_index == 0:
-                        if p['top'] == 0:
-                            if p.check_fit()
+        for row_ind, row in enumerate(self.puzzle):
+            for col_ind, col in enumerate(row):
+                for p_ind, p in enumerate(self.pieces):
+                    if self.check_fit(row_ind, col_ind, p):
+                        self.puzzle[row_ind][col_ind] = self.pieces.pop(p_ind)
+                        break
+
+        if all([c for r in self.puzzle for c in r]):
+            return self.puzzle
+        else:
+            self.reset_puzzle()
+            self.reset_pieces()
+            return self.build_puzzle()
 
 
 class Piece:
@@ -35,15 +94,6 @@ class Piece:
                       'top': side_shapes[1],
                       'right': side_shapes[2],
                       'bottom': side_shapes[3]}
-
-    def check_fit(self, piece2, specific_sides):
-        """
-        :param piece2: Piece() object
-        :param specific_sides: list of length 2 (strings with opposite sides)
-        :return: boolean
-        """
-
-        return self.sides[specific_sides[0]] == piece2.sides[specific_sides[1]]
 
     def turn_piece(self):
         """
