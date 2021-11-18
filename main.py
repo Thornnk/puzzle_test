@@ -81,18 +81,36 @@ class Puzzle:
         return all(fit)
 
     def build_puzzle(self):
-        for row_ind, row in enumerate(self.puzzle):
-            for col_ind, col in enumerate(row):
-                for p_ind, p in enumerate(self.pieces):
-                    if self.check_fit(row_ind, col_ind, p):
-                        self.puzzle[row_ind][col_ind] = self.pieces.pop(p_ind)
-                        break
-        if all([c for r in self.puzzle for c in r]):
-            return self.puzzle
-        else:
+
+        completed = False
+        while not completed:
+
+            for row_ind, row in enumerate(self.puzzle):
+                for col_ind, col in enumerate(row):
+                    for p_ind, p in enumerate(self.pieces):
+                        if self.check_fit(row_ind, col_ind, p):
+                            self.puzzle[row_ind][col_ind] = self.pieces.pop(p_ind)
+                            break
+
+            if all([c for r in self.puzzle for c in r]): completed = True
             self.reset_puzzle()
             self.reset_pieces()
-            return self.build_puzzle()
+        return self.puzzle
+
+
+
+        # for row_ind, row in enumerate(self.puzzle):
+        #     for col_ind, col in enumerate(row):
+        #         for p_ind, p in enumerate(self.pieces):
+        #             if self.check_fit(row_ind, col_ind, p):
+        #                 self.puzzle[row_ind][col_ind] = self.pieces.pop(p_ind)
+        #                 break
+        # if all([c for r in self.puzzle for c in r]):
+        #     return self.puzzle
+        # else:
+        #     self.reset_puzzle()
+        #     self.reset_pieces()
+        #     return self.build_puzzle()
 
 
 class Piece:
