@@ -19,56 +19,65 @@ class Puzzle:
         self.pieces = self.all_pieces.copy()
         shuffle(self.pieces)
 
-    @staticmethod
-    def check_border_piece(row_ind, col_ind, piece):
+    def check_border_piece(self, row_ind, col_ind, piece):
         for _ in range(4):
             if row_ind == 0:
                 if col_ind == 0:
                     if piece.sides['left'] == '0' and piece.sides['top'] == '0': return True
                     else: piece.turn_piece()
-                else:
+                elif col_ind == self.size[1]:
                     if piece.sides['top'] == '0' and piece.sides['right'] == '0': return True
                     else: piece.turn_piece()
-            else:
+                else:
+                    if piece.sides['top'] == '0':
+                        if self.puzzle[row_ind][col_ind-1] != 0:
+                            if self.puzzle[row_ind][col_ind-1].sides['right'] == piece.sides['left']: return True
+                    else: piece.turn_piece()
+            elif row_ind == self.size[0]:
                 if col_ind == 0:
                     if piece.sides['bottom'] == '0' and piece.sides['left'] == '0': return True
                     else: piece.turn_piece()
-                else:
+                elif col_ind == self.size[1]:
                     if piece.sides['right'] == '0' and piece.sides['bottom'] == '0': return True
+                    else: piece.turn_piece()
+                else:
+                    if piece.sides['bottom'] == '0':
+                        if self.puzzle[row_ind][col_ind-1] != 0:
+                            if self.puzzle[row_ind][col_ind-1].sides['right'] == piece.sides['left']: return True
+                    else: piece.turn_piece()
+            else:
+                if col_ind == 0:
+                    if piece.sides['left'] == '0':
+                        if self.puzzle[row_ind-1][col_ind] != 0:
+                            if self.puzzle[row_ind-1][col_ind].sides['bottom'] == piece.sides['top']: return True
+                    else: piece.turn_piece()
+                else:
+                    if piece.sides['right'] == '0':
+                        if self.puzzle[row_ind-1][col_ind] != 0:
+                            if self.puzzle[row_ind-1][col_ind].sides['bottom'] == piece.sides['top']: return True
                     else: piece.turn_piece()
         return False
 
     def check_inner_piece(self, row_ind, col_ind, piece):
         for _ in range(4):
-            if row_ind == 0:
-                if col_ind == 0: return True
-                else:
-                    if self.puzzle[row_ind][col_ind-1].sides['right'] == piece.sides['left']: return True
-                    else: piece.turn_piece()
-            else:
-                if col_ind == 0:
-                    if self.puzzle[row_ind-1][col_ind].sides['bottom'] == piece.sides['top']: return True
-                    else: piece.turn_piece()
-                else:
-                    print(self.puzzle)
-                    if self.puzzle[row_ind-1][col_ind].sides['bottom'] == piece.sides['top']:
-                        if self.puzzle[row_ind][col_ind-1].sides['right'] == piece.sides['left']: return True
-                    else: piece.turn_piece()
+            if self.puzzle[row_ind-1][col_ind] != 0 and self.puzzle[row_ind][col_ind-1] != 0:
+                if self.puzzle[row_ind-1][col_ind].sides['bottom'] == piece.sides['top'] and \
+                        self.puzzle[row_ind][col_ind-1].sides['right'] == piece.sides['left']: return True
+            else: piece.turn_piece()
         return False
 
     def check_fit(self, row_ind, col_ind, piece):
         fit = list()
-        # Da el visto bueno en caso de no ser un borde, o si lo es, de estar orientando bien sus lados '0'
+        # Comprueba si se trata de un borde, o si lo es, de si encaja o no
         if row_ind == 0 or row_ind == self.size[0] or col_ind == 0 or col_ind == self.size[1]:
             if self.check_border_piece(row_ind, col_ind, piece): fit.append(1)
             else: fit.append(0)
 
-        # Da el visto bueno si la pieza encaja con las de su alrededor (izquierda y arriba)
-        if self.check_inner_piece(row_ind, col_ind, piece): fit.append(1)
-        else: fit.append(0)
+        # Comprueba si la pieza interna encaja con las de su alrededor (izquierda y arriba)
+        else:
+            if self.check_inner_piece(row_ind, col_ind, piece): fit.append(1)
+            else: fit.append(0)
 
-        # Da el visto bueno conjunto si los dos anteriores vistos buenos han sido positivos
-        print(fit)
         return all(fit)
 
     def build_puzzle(self):
@@ -78,7 +87,6 @@ class Puzzle:
                     if self.check_fit(row_ind, col_ind, p):
                         self.puzzle[row_ind][col_ind] = self.pieces.pop(p_ind)
                         break
-
         if all([c for r in self.puzzle for c in r]):
             return self.puzzle
         else:
